@@ -11,6 +11,7 @@ import warnings
 class Cluster_storage(ABC):
     def __init__(self,cltr_list = None):
         self.cluster_list = []
+        
 
         if cltr_list is not None:
             # If we have clusters add them in

@@ -33,18 +33,23 @@ class Clusterings(ABC):
         a = []
         b = []
         g = []
-        d = []
+        d = np.ndarray(shape=(3,5),dtype = float)
         C = self.c_env
         Tf = 10.0   # Time to goal?
         #Tf = calculate_avg_switch_time()
+        count = 0
         for obs in self.obstacle_environment._obstacle_list: 
-            a.append(np.concatenate((obs.position, obs.linear_velocity),axis=0))
+            d[count,0:2] = obs.position
+            d[count,2:4] = obs.linear_velocity
+            d[count,4] = count
+            #a.append(np.concatenate((obs.position, obs.linear_velocity),axis=0))
             g.append(obs.goal)
+            count = count +1 
             #d.append(obs.destination)
         
         # Could maybe have tuples of each obs/ somehow select pairs and have cost and distance for each factor
         #Tf_avg = assume constant time for this iteration  
-        self.calculate_metrics(a,method)
+        self.calculate_metrics(d,method)
         # identify low cost pairs
         # Find ED betwen low cost pairs
         # Some function to check if pairs are below tolerance 

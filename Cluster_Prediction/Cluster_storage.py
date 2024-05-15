@@ -29,4 +29,4 @@ class Cluster_storage(ABC):
         self._obstacle_list[key] = value
 
     def append(self, value):  
-        self._obstacle_list.append(value)
+        self.cluster_list.append(value)

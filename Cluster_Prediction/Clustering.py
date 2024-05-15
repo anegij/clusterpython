@@ -10,6 +10,8 @@ import itertools
 
 from abc import ABC, abstractmethod
 from Cluster_Prediction import Metrics
+from Cluster_Prediction import UTILS as util
+from Cluster_Prediction.Cluster import Cluster
 
 class Clusterings(ABC):
     def __init__(self, obstacle_environment,Cluster_environment):
@@ -21,10 +23,11 @@ class Clusterings(ABC):
         self.otol = tols[3]
         self.c_env = Cluster_environment
         self.clusters = None
-        self.index = set()
+        self.index = []
         self.method = "DistanceOnly"
         self.dim = 4
         self.numobs = obstacle_environment.n_obstacles
+
 
 
 
@@ -58,7 +61,7 @@ class Clusterings(ABC):
         # Update clustering class obj, and add to cluster_environment
 
 
-    def calculate_cost(self,set1,goals,Tf):
+    '''def calculate_cost(self,set1,goals,Tf):
         # input - positions and velocities along with goals for all obstacles in order
         # output- find pairs, evaluate cost between all pairs, identify low cost pairs
         
@@ -66,7 +69,7 @@ class Clusterings(ABC):
         set1
         for pair in a:
             counter = 0
-            Cost = Metrics.cost_metric(pair,Tf,goals)
+            Cost = Metrics.cost_metric(pair,Tf,goals)'''
 
     
  
@@ -92,16 +95,11 @@ class Clusterings(ABC):
             o_list =  Orient < self.otol
             agent_list = d_list & v_list & o_list
 
-            # if any true- > cluster tht pair -> define cluster params-> remove from b, replace with cluster mean
-        # Check other tolerances
             self.make_two_agent_cluster(agent_list,b,a)
             # Maybe update b to remove agents and add clusters
             # Reuse function to make cluster-cluster groupings 
-            a = 1
 
-
-
-
+        # Other methods
         elif method == 'CostMetrics':
             for pair in a:
                 counter = 0
@@ -113,48 +111,43 @@ class Clusterings(ABC):
         # pair_list - list of all combinations of agents
         # Check if multiple agent pair satisfy metrics for clustering
         new_agents = np.copy(agents)
-        arr = np.ndarray(shape = (3,1), dtype=float)
-        arr = [i for i in range(0,3)]
-        np.reshape(arr)
-        print(np.shape(new_agents))
-        print(np.shape(arr))
-        a =  np.concatenate((new_agents,arr),axis = 1)
-        print(a)
+        cluster_no = -1
+        # loop through all pairs
         for tols,pair in zip(tol_list, pair_list):
-            pair = np.array(pair)
             if new_agents.size == 0:
                 return agents
             if tols == 1:
-                # if intersection gives both pair mem then cluster
-                # if intersection gives one, then check to add to cluster
-                anum = np.intersect1d(new_agents,pair)
-                #[i for i in new_agents if i not in pair]
+                [p1,p2,idp] = util.parse_agent_dat(pair[0])
+                [q1,q2,idq] = util.parse_agent_dat(pair[1])
+                [an1,an2] = util.pair_inagentlist(new_agents,pair[0],pair[1])
 
-                if len(anum) == 8:
-                    Cluster = pair
-                    print(len(pair))
-                    n_na = len(new_agents)
-                    #new_agents = [np.setdiff1d(new_agents,i) for i in pair for j in new_agents if (i==j).all()]
-                    for i in range(0,len(pair)):
-                        for j in range(0,len(new_agents)):
-                            if (pair[i,:]==new_agents[j,:]).all():
-                                mask = np.ones_like(new_agents,dtype=bool)
-                                mask[j,:] = False
-                                result = new_agents[mask]
-                                result = np.reshape(result,(-1,self.dim))
-                                                        
-                elif len(anum) == 4:
-                    # find other agent
-                    np.setdiff1d(pair, new_agents, assume_unique=False)
+                if (an1 == 1) & (an2 == 1):
+                    new_agents = np.delete(new_agents,[idp,idq],0)
+                    # add pair to new cluster
+                    cluster_no = cluster_no + 1
+                    C_new = Cluster(pair[0],pair[1],cluster_no) # make cluster
+                    print(type(self.c_env))
+                    self.c_env.append(C_new) # Add to clusterings
+                elif (an1 == 0) & (an2 == 0):
 
-                    check_agent_cluster_group()
-                    # if intersection gives one, then check to add to cluster
-                elif len(anum) == 0:
-                    # skip to next pair
                     continue
+                else:
+                # assume one is true
+                    if an1 == 1:
+                        # add to existing cluster maybe
+                        util.check_agent_cluster_group(pair[0])
+                    if an2 == 1:
+                        # check and add to existing cluster
 
+                        util.check_agent_cluster_group(pair[1])
 
-
+        if new_agents.size != 0:
+            for agent in new_agents:
+                [p1,p2,idp] = util.parse_agent_dat(agent)
+                cluster_no = cluster_no + 1
+                C_new = Cluster(agent,agent,cluster_no) # make cluster
+                self.c_env.append(C_new)
+        
 
     #def make_multi_agent_clusters():
 

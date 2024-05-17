@@ -14,12 +14,14 @@ from Cluster_Prediction import UTILS as util
 from Cluster_Prediction.MM_UKF import MM_UKF
 
 class Cluster(ABC):
-    def __init__(self,mem1,mem2,cluster_idx):
+    def __init__(self,mem1,mem2,cluster_idx,radii):
         [p1,p2,idp] = util.parse_agent_dat(mem1)
         [q1,q2,idq] = util.parse_agent_dat(mem2)
         self.cov = 0.001*np.eye(4,4)
         self.x_mean_prop = None
         self.x_sigs = None
+        self.radii = radii
+        self.modals = [0.5,0.5]
         if all(mem1 == mem2):
             self.mean_pos = p1
             self.mean_vel = p2
@@ -48,3 +50,8 @@ class Cluster(ABC):
         modes = [0,1]
         filter = MM_UKF(delta_time,self) # create filter class, holds variables
         filter.MMUKF(self,Cluster_environment,modes)
+
+    def gen_observation(self,filter):
+        z = np.matmul(filter.H,self.x_mean_prop) + np.random.normal(np.zeros(4),filter.R)
+        # OR TODO make linear path with constant vel assumption + add noise
+        return 

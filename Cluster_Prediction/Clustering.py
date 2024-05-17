@@ -27,6 +27,8 @@ class Clusterings(ABC):
         self.method = "DistanceOnly"
         self.dim = 4
         self.numobs = obstacle_environment.n_obstacles
+        self.radii = np.average(self.obstacle_environment._obstacle_list[0].axes_length)
+        
 
 
 
@@ -34,7 +36,7 @@ class Clusterings(ABC):
     def do_clustering(self):
         method = self.method
         a = []
-        b = []
+        r = []
         g = []
         d = np.ndarray(shape=(3,5),dtype = float)
         C = self.c_env
@@ -125,7 +127,7 @@ class Clusterings(ABC):
                     new_agents = np.delete(new_agents,[idp,idq],0)
                     # add pair to new cluster
                     cluster_no = cluster_no + 1
-                    C_new = Cluster(pair[0],pair[1],cluster_no) # make cluster
+                    C_new = Cluster(pair[0],pair[1],cluster_no,self.radii) # make cluster
                     print(type(self.c_env))
                     self.c_env.append(C_new) # Add to clusterings
                 elif (an1 == 0) & (an2 == 0):
@@ -145,7 +147,7 @@ class Clusterings(ABC):
             for agent in new_agents:
                 [p1,p2,idp] = util.parse_agent_dat(agent)
                 cluster_no = cluster_no + 1
-                C_new = Cluster(agent,agent,cluster_no) # make cluster
+                C_new = Cluster(agent,agent,cluster_no,self.radii) # make cluster
                 self.c_env.append(C_new)
         
 

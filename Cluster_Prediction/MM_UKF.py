@@ -24,12 +24,12 @@ class MM_UKF(ABC):
         #General Multimodal for either cluster with members/singleton cluster
         Holder = []
         for mode in self.modes:
-            [xm, Pm, new_XS] = self.propagate_clusters(xi,Clusters,mode,ego = None)
+            [xm, Pm, new_XS, Wm, Wc] = self.propagate_clusters(xi,Clusters,mode,ego = None)
             Holder.append([xm,Pm,new_XS])
         #porpogate
         # Combine modes
         z = self.combine_modes(Holder,xi,Clusters,modes)
-        self.update_cluster(xi,)
+        self.update_cluster(z,xi,Wm,Wc)
 
 
     def propagate_clusters(self,xi,Clusters,mode,ego=None):
@@ -59,7 +59,7 @@ class MM_UKF(ABC):
         xi.x_mean_prop = xm
         xi.x_sigs = new_XS
         xi.cluster_members = new_XS[-2:-1,:]
-        return xm, Pm, new_XS
+        return xm, Pm, new_XS, Wm, Wc
             
     def combine_modes(self,Holder,xi,Clusters,modes):
         H = self.H

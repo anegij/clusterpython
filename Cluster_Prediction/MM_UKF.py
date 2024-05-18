@@ -104,9 +104,25 @@ class MM_UKF(ABC):
             
         return z
 
-    def update_cluster():
-
-
-        return
+   def update_cluster(self,z,xi,Wm,Wc):
+    ns = self.dim # no of states
+    Pzz = np.zeros(ns,ns) + self.R
+    Pxz = np.zeros(ns,ns)
+    Zk = np.zeros(xi.n_sig+1,ns)
+    for ii in range(0,xi.n_sig): # Check if n_sig or nosig+1
+        Xm = xi.x_sigs[ii]
+        Zk[ii,:] = np.matmul(self.H,Xm) + np.random.normal(np.zeros(ns,1),self.R)
+    zm = np.matmul(Zk,Wm)
+    xm = xi.x_mean_prop
+    for ii in range(0,xi.n_sig):
+        Xm = xi.x_sigs[ii]
+        Pzz = Pzz + matmul(Wc[ii],np.matmul((Zk[ii] - zm),np.transpose(Zk[ii] - zm))
+        Pxz = Pxz + matmul(Wc[ii],np.matmul((Xm[ii] - xm),np.transpose(Zk[ii] - zm))
+    z_mean = np.mean(zm)
+    Kk = np.matmul(Pxz,np.inv(Pzz))
+    xk = xm + matmul(Kk,(z_mean-z);
+    Pk = P_m - matmul(Kk,np.matmul(Pzz,np.tranpose(Kk)));
+      
+    return xk,Pk
 
     

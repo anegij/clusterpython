@@ -31,8 +31,6 @@ class Clusterings(ABC):
         
 
 
-
-
     def do_clustering(self):
         method = self.method
         a = []
@@ -49,12 +47,13 @@ class Clusterings(ABC):
             d[count,4] = count
             #a.append(np.concatenate((obs.position, obs.linear_velocity),axis=0))
             g.append(obs.goal)
+            a.append(obs.cov)
             count = count +1 
             #d.append(obs.destination)
         
         # Could maybe have tuples of each obs/ somehow select pairs and have cost and distance for each factor
         #Tf_avg = assume constant time for this iteration  
-        self.calculate_metrics(d,method)
+        self.calculate_metrics(d,g,a)
         # identify low cost pairs
         # Find ED betwen low cost pairs
         # Some function to check if pairs are below tolerance 
@@ -75,7 +74,7 @@ class Clusterings(ABC):
 
     
  
-    def calculate_metrics(self,b,g):
+    def calculate_metrics(self,b,g,Cov):
         # b is list of all agents
         # a is list of all pairs of agents
         a = list(itertools.combinations(b,2))
@@ -97,7 +96,7 @@ class Clusterings(ABC):
             o_list =  Orient < self.otol
             agent_list = d_list & v_list & o_list
 
-            self.make_two_agent_cluster(agent_list,b,a)
+            self.make_two_agent_cluster(agent_list,b,a,g,Cov)
             # Maybe update b to remove agents and add clusters
             # Reuse function to make cluster-cluster groupings 
 
@@ -108,7 +107,7 @@ class Clusterings(ABC):
                 Dist[counter] = Metrics.cost_metric(pair,Tf,g)
                 counter =+ 1
 
-    def make_two_agent_cluster(self,tol_list,agents,pair_list):
+    def make_two_agent_cluster(self,tol_list,agents,pair_list,g,Cov):
         # agents - array with all sgents in [x y vx vy] form
         # pair_list - list of all combinations of agents
         # Check if multiple agent pair satisfy metrics for clustering
@@ -127,8 +126,7 @@ class Clusterings(ABC):
                     new_agents = np.delete(new_agents,[idp,idq],0)
                     # add pair to new cluster
                     cluster_no = cluster_no + 1
-                    C_new = Cluster(pair[0],pair[1],cluster_no,self.radii) # make cluster
-                    print(type(self.c_env))
+                    C_new = Cluster(pair[0],pair[1],cluster_no,self.radii,g,Cov) # make cluster
                     self.c_env.append(C_new) # Add to clusterings
                 elif (an1 == 0) & (an2 == 0):
 
@@ -147,15 +145,14 @@ class Clusterings(ABC):
             for agent in new_agents:
                 [p1,p2,idp] = util.parse_agent_dat(agent)
                 cluster_no = cluster_no + 1
-                C_new = Cluster(agent,agent,cluster_no,self.radii) # make cluster
+                C_new = Cluster(agent,agent,cluster_no,self.radii,g,Cov) # make cluster
                 self.c_env.append(C_new)
         
 
     #def make_multi_agent_clusters():
 
 
-    
-            
+
 
 
 

@@ -30,3 +30,24 @@ class Cluster_storage(ABC):
 
     def append(self, value):  
         self.cluster_list.append(value)
+
+    def update_obstacles(self,obstacle_environment):
+        a = 2
+        for cls in self.cluster_list:
+            ids = np.array(cls.mem_idx)
+            if np.size(ids) == 1:
+                obstacle_environment._obstacle_list[ids].position = cls.mean_pos
+                obstacle_environment._obstacle_list[ids].linear_velocity = cls.mean_vel
+                obstacle_environment._obstacle_list[ids].cov = cls.cov
+                continue
+            for id in ids:
+                """obstacle_environment._obstacle_list[id].position = cls.mean_pos
+                obstacle_environment._obstacle_list[id].linear_velocity = cls.mean_vel
+                obstacle_environment._obstacle_list[id].cov = cls.cov"""
+                obstacle_environment._obstacle_list[id].position = cls.x_sigs[-a,0:2]
+                obstacle_environment._obstacle_list[id].linear_velocity = cls.x_sigs[-a,2:4]
+                obstacle_environment._obstacle_list[id].cov = cls.cov
+                a = a-1
+
+    
+            

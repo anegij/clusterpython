@@ -4,6 +4,7 @@ from Cluster_Prediction import Metrics
 from Cluster_Prediction import UTILS as util
 from Cluster_Prediction.obs_Controller import obs_Controller
 from scipy.integrate import solve_ivp
+import scipy
 
 def parse_agent_dat(a):
     pa = a[0:2]
@@ -34,13 +35,16 @@ def make_sigma_points(xi,n_sigma,dim,P):
     kap = 1
     #X(0) - xi, X(1:ns)+ X(ns+1:2ns
     xm = np.concatenate((xi.mean_pos, xi.mean_vel))
-    L = LN.cholesky(P)
+    #if (LN.det(P) < 1e-6): 
+    P = np.diag([0.1,0.1,0.01,0.01])
+    L =LN.cholesky(P)
+
     X_sigma = (np.empty((n_sigma+1,dim)))   # needs len no, want 0 + 1..n terms
     X_sigma[index] = xm # n=0
-    if (len(xi.cluster_members) > 1):
+    if (len(xi) > 1):
         for member in xi.cluster_members:
             X_sigma = np.append(X_sigma,member)
-        n_sigma = n_sigma + 1 + len(xi.cluster_members)
+        n_sigma = n_sigma + 1 + len(xi)
         X_sigma = np.reshape(X_sigma,(n_sigma,dim))
     else:
         n_sigma = n_sigma +1    # actual no of points = 9 0..2*n
@@ -62,6 +66,7 @@ def make_sigma_points(xi,n_sigma,dim,P):
     Wm[1:n_sigma] = 1/(2*(n+lam))
     Wc[1:n_sigma] = 0.5/(n+lam)
 
+    xi.x_sigs = X_sigma
     return X_sigma,Wm,Wc
 
 
@@ -70,6 +75,7 @@ def dyn_model_SF(ego,delta_time,goal,other_obstacles):
     Contrl = obs_Controller()
     lam1 = param_goal_tuning(ego,goal)
     lam2 = param_agent_tuning(ego,other_obstacles)
+    lam2 = 0.05
     lam = [lam1,lam2]
 
     usf = Contrl.SF_control(ego,goal,other_obstacles)
@@ -93,3 +99,66 @@ def param_agent_tuning(ego,other_obstacles):
     mean_pos = np.average(pos,0)
     lam = LN.norm(ego[0:2] - mean_pos)
     return lam
+
+def plot_clusters(
+    obstacle_container,
+    cluster_container,
+    x_lim=None,
+    y_lim=None,
+    ax=None):
+    # Go trhough obstacles make boundary
+    for n, obs in enumerate(obstacle_container):
+        if hasattr(obs, "get_boundary_with_margin_xy"):
+            x_obs_sf = np.array(obs.get_boundary_with_margin_xy()).T
+        ax.plot(
+            x_obs_sf[:, 0],
+            x_obs_sf[:, 1],
+            color="black",
+            linestyle="-.",
+            alpha=1,
+            zorder=2,
+        )
+        ax.plot(
+            obs.position[0],
+            obs.position[1],
+            'mx',
+        )
+
+    for cls in cluster_container.cluster_list:
+        ids = cls.mem_idx
+        ax.plot(cls.goal[0],
+                cls.goal[1],
+                'kH',
+                markersize = 7)
+        
+        if np.size(ids) == 1:
+            # center marker for singleton
+            ax.plot(cls.mean_pos[0],
+                    cls.mean_pos[1],
+                    'ro',
+                    markersize = 12)
+            ax.plot(cls.mean_pos[0],
+                    cls.mean_pos[1],
+                    'bs',
+                    markersize = 7)
+            # red splotch of covariance
+
+            
+            continue
+        else:
+            #  center marker for cluster
+            ax.plot(cls.mean_pos[0],
+                    cls.mean_pos[1],
+                    'ro',
+                    markersize = 12)
+            # red splotch for covariance
+        # Plot members
+        nmem = len(cls)
+        xmem = cls.x_sigs[-nmem-1:-1,:]  
+        ax.plot(xmem[:,0],
+                    xmem[:,1],
+                    'b+',
+                    markersize = 5) 
+        
+        
+    return

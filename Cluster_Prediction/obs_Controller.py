@@ -18,13 +18,13 @@ class obs_Controller():
         self.K = [0.5,0.5]
         self.A = [[0,0,1,0],[0,0,0,1],
                   [0,0,0,0],[0,0,0,0]]
-        self.B = [[0,0,1,0],[0,0,0,1]]
+        self.B = [[0,0],[1,0],[0,0],[0,1]]
         self.Aatt = 20
         self.Batt = 0.08
         self.Arep = 20
         self.Brep = 0.08
         self.udim = 2
-        self.u_max = [2,2]
+        self.u_max = [0.5,0.5]
         self.radii = 0.5
 
     
@@ -33,8 +33,8 @@ class obs_Controller():
         dydt = np.zeros(4)
         dydt[0] = y[2]
         dydt[1] = y[3]
-        dydt[2] = lam[0]*ug[0] + lam[1]*usf[0]
-        dydt[3] = lam[0]*ug[1] + lam[1]*usf[1]
+        dydt[2] = np.sign(lam[0]*ug[0] + lam[1]*usf[0]) * np.minimum(np.abs(lam[0]*ug[0] + lam[1]*usf[0]),self.u_max[0])
+        dydt[3] = np.sign(lam[0]*ug[1] + lam[1]*usf[1]) * np.minimum(np.abs(lam[0]*ug[1] + lam[1]*usf[1]),self.u_max[1])
         return dydt
 
     def PD_control(self,y,goal):
